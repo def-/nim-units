@@ -6,7 +6,7 @@ import strutils, math, macros
 # Compiler bug: Doesn't work with borrow
 template additive(quant: typedesc): stmt =
   template `+` *(x, y: quant): quant = quant(float(x) + float(y))
-  template `-` *(x, y: quant): quant = quant(float(x) + float(y))
+  template `-` *(x, y: quant): quant = quant(float(x) - float(y))
   # Why don't they work automatically?
   template `+=` *(x: var quant, y: quant) = x = quant(float(x) + float(y))
   template `-=` *(x: var quant, y: quant) = x = quant(float(x) - float(y))
@@ -116,6 +116,8 @@ macro `:=`(abc, data): stmt =
         result = parseStmt("isInverse(" & to & ", " & from2 & ")")
       else:
         result = parseStmt("isMult(" & from1 & ", " & to & ", " & from2 & ")")
+    else:
+      assert false
   else:
     discard
 
@@ -216,74 +218,74 @@ EquivalentDose := Energy / Mass
 AbsorbedDose := EquivalentDose
 CatalyticActivity := Frequency * AmountOfSubstance
 
-# Tests
-var f = 2.newton
-var x = 2.meter
-var e = f * x
-echo e
+when isMainModule:
+  # Tests
+  var f = 2.newton
+  var x = 2.meter
+  var e = f * x
+  echo e
 
-var v = 12.5.volt
-var i = 3.0.ampere
-var r = v / i
-var i2 = v / r
-echo r
-echo i2
-echo i2 == i
+  var v = 12.5.volt
+  var i = 3.0.ampere
+  var r = v / i
+  var i2 = v / r
+  echo r
+  echo i2
+  echo i2 == i
 
-var a = 2.meter * 5.meter
-echo a
-echo 2.meter * 5.meter * 3.meter
+  var a = 2.meter * 5.meter
+  echo a
+  echo 2.meter * 5.meter * 3.meter
 
-echo 1.meter + 3.foot
-echo 3.yoctometer
+  echo 1.meter + 3.foot
+  echo 3.yoctometer
 
-var s = 2.second
+  var s = 2.second
 
-var vel = 2.meters / 5.second
-echo vel / millisecond
+  var vel = 2.meters / 5.second
+  echo vel / millisecond
 
-var gew: Mass = 2.gram
-echo gew
+  var gew: Mass = 2.gram
+  echo gew
 
-#var sum1 = 0.0
-#for i in 1..1000000000:
-#  sum1 += 1.0
-#echo sum1
+  #var sum1 = 0.0
+  #for i in 1..1000000000:
+  #  sum1 += 1.0
+  #echo sum1
 
-# Just as fast as simple floats
-#var sum2 = 0.0.kilogram
-#for i in 1..1000000000:
-#  sum2 += 1.0.kilogram
-#echo sum2
+  # Just as fast as simple floats
+  #var sum2 = 0.0.kilogram
+  #for i in 1..1000000000:
+  #  sum2 += 1.0.kilogram
+  #echo sum2
 
-var temp = 10.degreeCelsius
-echo temp + 10.kelvin
+  var temp = 10.degreeCelsius
+  echo temp + 10.kelvin
 
-echo x.inUnit(millimeters)
-echo x
+  echo x.inUnit(millimeters)
+  echo x
 
-var ti: Time = 4.seconds
-echo ti
-var ve = 2.meters / ti
-echo ve
-var ac: Acceleration = ve / millisecond
-echo ac
-ac *= 3.0
-echo ac
+  var ti: Time = 4.seconds
+  echo ti
+  var ve = 2.meters / ti
+  echo ve
+  var ac: Acceleration = ve / millisecond
+  echo ac
+  ac *= 3.0
+  echo ac
 
-var eqv = 2.joule / 10.kilogram
-echo eqv
-echo asAbsorbedDose eqv
+  var eqv = 2.joule / 10.kilogram
+  echo eqv
+  echo asAbsorbedDose eqv
 
-echo 1 / 1.second
-echo asRadioactivity 1 / 1.second
-echo 20.kilogram
-echo 20.kilometer
+  echo 1 / 1.second
+  echo asRadioactivity 1 / 1.second
+  echo 20.kilogram
+  echo 20.kilometer
 
-#echo 20.gallon
+  #echo 20.gallon
 
-#quantity(Efficiency, metersPe, "rad")
-#let fuelEfficiency = 40.mile / 1.gallon
+  #quantity(Efficiency, metersPe, "rad")
+  #let fuelEfficiency = 40.mile / 1.gallon
 
-# TODO: Some more complicated examples for actual calculations
-
+  # TODO: Some more complicated examples for actual calculations
