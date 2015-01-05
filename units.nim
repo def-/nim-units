@@ -1,28 +1,24 @@
 {.hint[XDeclaredButNotUsed]: off.}
 import strutils, math, macros
 
-# TODO: Can we add other bases except float?
-
-# Compiler bug: Doesn't work with borrow
 template additive(quant: typedesc): stmt =
-  template `+` *(x, y: quant): quant = quant(float(x) + float(y))
-  template `-` *(x, y: quant): quant = quant(float(x) - float(y))
-  # Why don't they work automatically?
-  template `+=` *(x: var quant, y: quant) = x = quant(float(x) + float(y))
-  template `-=` *(x: var quant, y: quant) = x = quant(float(x) - float(y))
+  proc `+` *(x, y: quant): quant {.borrow.}
+  proc `-` *(x, y: quant): quant {.borrow.}
+  proc `+=` *(x: var quant, y: quant) {.borrow.}
+  proc `-=` *(x: var quant, y: quant) {.borrow.}
 
 template multiplicative(quant: typedesc): stmt =
-  template `*` *(x: quant, y: float): quant = quant(float(x) * y)
-  template `*` *(x: float, y: quant): quant = quant(x * float(y))
-  template `/` *(x: quant, y: float): quant = quant(float(x) / y)
+  proc `*` *(x: quant, y: float): quant {.borrow.}
+  proc `*` *(x: float, y: quant): quant {.borrow.}
+  proc `/` *(x: quant, y: float): quant {.borrow.}
 
   template `*=` *(x: var quant, y: float) = x = quant(float(x) * float(y))
   template `/=` *(x: var quant, y: float) = x = quant(float(x) / float(y))
 
 template comparable(quant: typedesc): stmt =
-  template `<`  *(x, y: quant): bool = float(x) < float(y)
-  template `<=` *(x, y: quant): bool = float(x) <= float(y)
-  template `==` *(x, y: quant): bool = float(x) == float(y)
+  proc `<`  *(x, y: quant): bool {.borrow.}
+  proc `<=` *(x, y: quant): bool {.borrow.}
+  proc `==` *(x, y: quant): bool {.borrow.}
 
 template metricPrefix(unit: expr, prefix: expr, factor: expr, addS = true): stmt =
   template `prefix unit`*(x = 1.0): auto = (x * factor).unit
@@ -57,7 +53,6 @@ template quantity(quant: expr, unit: expr, output: expr, addS = true): stmt {.im
   multiplicative(quant)
   comparable(quant)
 
-  #const unit* = quant(1.0)
   template unit*(x = 1.0): quant = quant(x)
   metricPrefixes(unit, addS)
 
@@ -70,16 +65,16 @@ template quantity(quant: expr, unit: expr, output: expr, addS = true): stmt {.im
     proc `$`(x: quant): string = $ float(x).formatFloat(precision = 0) & " " & output
 
 template isMult(to: expr, from1: expr, from2: expr): stmt =
-  template `*` *(x: from1, y: from2): to = to(float(x) * float(y))
+  proc `*` *(x: from1, y: from2): to {.borrow.}
   when not (from1 is from2):
-    template `*` *(x: from2, y: from1): to = to(float(x) * float(y))
-  template `/` *(x: to, y: from1): from2 = from2(float(x) / float(y))
+    proc `*` *(x: from2, y: from1): to {.borrow.}
+  proc `/` *(x: to, y: from1): from2 {.borrow.}
   when not (from1 is from2):
-    template `/` *(x: to, y: from2): from1 = from1(float(x) / float(y))
+    proc `/` *(x: to, y: from2): from1 {.borrow.}
 
 template isInverse(a: expr, b: expr): stmt =
-  template `/` *(x: float, y: a): b = b(x / float(y))
-  template `/` *(x: float, y: b): a = a(x / float(y))
+  proc `/` *(x: float, y: a): b {.borrow.}
+  proc `/` *(x: float, y: b): a {.borrow.}
 
 template isAlso(a: expr, b: expr): stmt =
   template `as a` *(x: b): a = a(x)
