@@ -1,13 +1,13 @@
 {.hint[XDeclaredButNotUsed]: off.}
 import strutils, math, macros
 
-template additive(quant: typedesc): stmt =
+template additive(quant: typedesc): typed =
   proc `+` *(x, y: quant): quant {.borrow.}
   proc `-` *(x, y: quant): quant {.borrow.}
   proc `+=` *(x: var quant, y: quant) {.borrow.}
   proc `-=` *(x: var quant, y: quant) {.borrow.}
 
-template multiplicative(quant: typedesc): stmt =
+template multiplicative(quant: typedesc): typed =
   proc `*` *(x: quant, y: float): quant {.borrow.}
   proc `*` *(x: float, y: quant): quant {.borrow.}
   proc `/` *(x: quant, y: float): quant {.borrow.}
@@ -15,17 +15,17 @@ template multiplicative(quant: typedesc): stmt =
   template `*=` *(x: var quant, y: float) = x = quant(float(x) * float(y))
   template `/=` *(x: var quant, y: float) = x = quant(float(x) / float(y))
 
-template comparable(quant: typedesc): stmt =
+template comparable(quant: typedesc): typed =
   proc `<`  *(x, y: quant): bool {.borrow.}
   proc `<=` *(x, y: quant): bool {.borrow.}
   proc `==` *(x, y: quant): bool {.borrow.}
 
-template metricPrefix(unit: expr, prefix: expr, factor: expr, addS = true): stmt =
+template metricPrefix(unit: untyped, prefix: untyped, factor: untyped, addS = true): typed =
   template `prefix unit`*(x = 1.0): auto = (x * factor).unit
   when addS:
     template `prefix unit s`*(x = 1.0): auto = (x * factor).unit
 
-template metricPrefixes(unit: expr, addS = true): stmt =
+template metricPrefixes(unit: untyped, addS = true): typed =
   metricPrefix(unit, yocto, 1e-24, addS)
   metricPrefix(unit, zepto, 1e-21, addS)
   metricPrefix(unit, atto,  1e-18, addS)
@@ -47,7 +47,7 @@ template metricPrefixes(unit: expr, addS = true): stmt =
   metricPrefix(unit, zetta, 1e21, addS)
   metricPrefix(unit, yotta, 1e24, addS)
 
-template quantity(quant: expr, unit: expr, output: expr, addS = true): stmt {.immediate.} =
+template quantity(quant: untyped, unit: untyped, output: untyped, addS = true): typed =
   type quant* = distinct float
   additive(quant)
   multiplicative(quant)
@@ -60,11 +60,11 @@ template quantity(quant: expr, unit: expr, output: expr, addS = true): stmt {.im
     template `unit s`*(x = 1.0): quant = quant(x)
 
   when output == "kg":
-    proc `$`(x: quant): string = $ float(x / 1000).formatFloat(precision = 0) & " " & output
+    proc `$`*(x: quant): string = $ float(x / 1000).formatFloat(precision = 0) & " " & output
   else:
-    proc `$`(x: quant): string = $ float(x).formatFloat(precision = 0) & " " & output
+    proc `$`*(x: quant): string = $ float(x).formatFloat(precision = 0) & " " & output
 
-template isMult(to: expr, from1: expr, from2: expr): stmt =
+template isMult(to: untyped, from1: untyped, from2: untyped): typed =
   proc `*` *(x: from1, y: from2): to {.borrow.}
   when not (from1 is from2):
     proc `*` *(x: from2, y: from1): to {.borrow.}
@@ -72,14 +72,14 @@ template isMult(to: expr, from1: expr, from2: expr): stmt =
   when not (from1 is from2):
     proc `/` *(x: to, y: from2): from1 {.borrow.}
 
-template isInverse(a: expr, b: expr): stmt =
+template isInverse(a: untyped, b: untyped): typed =
   proc `/` *(x: float, y: a): b {.borrow.}
   proc `/` *(x: float, y: b): a {.borrow.}
 
-template isAlso(a: expr, b: expr): stmt =
+template isAlso(a: untyped, b: untyped): typed =
   template `as a` *(x: b): a = a(x)
 
-macro `:=`(abc, data): stmt =
+macro `:=`(abc, data): typed =
   assert(abc.kind == nnkIdent)
   let to = $abc.ident
 
@@ -116,11 +116,11 @@ macro `:=`(abc, data): stmt =
   else:
     discard
 
-template altName(x: expr, y: expr, addS = false): stmt =
+template altName(x: untyped, y: untyped, addS = false): typed =
   const y* = x
   metricPrefixes(y, addS)
 
-template inUnit(x: expr, y: expr): expr =
+template inUnit(x: untyped, y: untyped): untyped =
   float(float(x).y)
 
 # SI base units
@@ -173,11 +173,11 @@ meterPerSecondSquared.altName(metrePerSecondSquared)
 meterPerSecondSquared.altName(metresPerSecondSquared)
 
 # Non-SI units
-template degreeCelsius*(x: expr): expr = (x + 273.15).kelvin
-template foot*(x: expr): expr = (x * 0.3048).meter
-#template mile*(x: expr): expr = (x * 1_609.344).meter
-#template liter*(x: expr): expr = (x / 1000).cubicmeter
-#template gallon*(x: expr): expr = (x * 3.79).liter
+template degreeCelsius*(x: untyped): untyped = (x + 273.15).kelvin
+template foot*(x: untyped): untyped = (x * 0.3048).meter
+#template mile*(x: untyped): untyped = (x * 1_609.344).meter
+#template liter*(x: untyped): untyped = (x / 1000).cubicmeter
+#template gallon*(x: untyped): untyped = (x * 3.79).liter
 
 # Relations between quantities
 Area := Length * Length
@@ -236,7 +236,8 @@ when isMainModule:
   echo 3.yoctometer
 
   var s = 2.second
-
+  echo s
+  
   var vel = 2.meters / 5.second
   echo vel / millisecond
 
